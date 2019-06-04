@@ -4,25 +4,13 @@ import seaborn as sns; sns.set()
 import matplotlib.pyplot as plt
 import os
 
-def faz_matriz(y, x, dy, dx):
+def faz_matriz(x, y, dy, dx):
     m = []
     qx = x/dx+1
     qy = y/dy+1
-    for i in range(int(qx)):
+    for i in range(int(qy)):
         l = []
-        for j in range(int(qy)):
-            """
-            if i == 0:
-                l.append(contorno[0])
-            elif i == qx-1:
-                l.append(contorno[2])
-            elif j == 0:
-                l.append(contorno[3])
-            elif j == qy-1:
-                l.append(contorno[1])
-            else:
-                l.append(0)
-            """
+        for j in range(int(qx)):
             l.append(0)
         m.append(l)
 
@@ -34,12 +22,13 @@ def calcula_ponto(K, alpha, q, x, dx, dy, dt, cima, direita, baixo, esquerda, ce
     V = alpha*sin(pi*x/5)
     U = alpha
 
-    c2 = centro * ((2 * K) / (dy * dy) - 1 / dt + (2 * K) / (dx * dx))
-    c3 = esquerda * (U / (2 * dx) - (K) / (dx * dx))
-    c4 = direita * (- (U / (2 * dx)) - (K / dx * dx))
-    c5 = cima * ( V / (2 * dy) - K / (dy * dy))
-    c6 = baixo * ( - (V / (2 * dy)) - (K) / (dy * dy))
-    c1 = -(c2 + c3 + c4 + c5 + c6 - q/(dx*dy))*dt
+    c2 = esquerda * ((U/2*dx)+(K/(dx*dx)))
+    c3 = direita * (-(U/2*dx)+(K/(dy*dy)))
+    c4 = centro * (-(2*K*((1/(dx*dx))+(1/(dy*dy)))))
+    c5 = baixo * (-(V/(2*dy))+(K/(dy*dy)))
+    c6 = cima * ((V/(2*dy))+(K/(dy*dy)))
+    c0 = q + c2 + c3 + c4 + c5 + c6
+    c1 = centro + dt*c0
     
     if c1 < 0:
         c1 = 0
@@ -63,7 +52,7 @@ def calcula_matriz(matriz, K, alpha, Q, a, b, T, dx, dy, dt):
             for i in range(len(matriz[0])):
 
                 # Geração
-                if t < T and i == xa and j == yb:
+                if (t < T) and (i == xa) and (j == yb):
                     q = Q/(dx*dy)
                     x = dx * (i + 1 / 2)
                     cima = matriz[j-1][i]
@@ -107,8 +96,9 @@ def calcula_matriz(matriz, K, alpha, Q, a, b, T, dx, dy, dt):
 
         # A cada 10 steps, guarda uma foto
         if ((t // dt)%10) == 0:
-            ax = sns.heatmap(matriz)
+            ax = sns.heatmap(matriz, cmap="GnBu_r", vmax="1")
             ax.invert_yaxis()
+            ax.set_title(str(t))
             plt.savefig("img/f"+str(count)+".png")
             plt.clf()
 
@@ -129,8 +119,8 @@ def main():
     Ly = float(input("Ly: "))
     dx = float(input("dx: "))
     dy = float(input("dy: "))
-    a = float(input("a: "))
-    b = float(input("b: "))
+    a = 10/1.4
+    b = 60/(10+5)
     T = float(input("T: "))
     # dt baseado na condição de convergência
     dt = 0.2*((dx*dy)/(4*K))
@@ -139,7 +129,7 @@ def main():
     for arq in arqs:
         if arq.endswith(".png"):
             os.remove(os.path.join("C:/Users/LiuSeeker/Desktop/5o-semestre/TermoSol/APS5-TransCal/img/", arq))
-    matriz = faz_matriz(Ly, Lx, dy, dx)
+    matriz = faz_matriz(Lx, Ly, dy, dx)
     n_matriz = calcula_matriz(matriz, K, alpha, Q, a, b, T, dx, dy, dt)
     
 main()
